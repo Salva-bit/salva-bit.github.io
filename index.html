@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -101,3 +100,548 @@
           <div class="price-value" id="currentPrice">--</div>
           <div class="price-change" id="priceChange">--</div>
         </div>
+        <div class="price-item">
+          <div class="price-label">24h High</div>
+          <div class="price-value" id="high24h">--</div>
+        </div>
+        <div class="price-item">
+          <div class="price-label">24h Low</div>
+          <div class="price-value" id="low24h">--</div>
+        </div>
+        <div class="price-item">
+          <div class="price-label">24h Vol (USDT)</div>
+          <div class="price-value" id="vol24h">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-wrapper">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+
+    <div class="indicators-grid">
+      <div class="indicator-card"><div class="indicator-label">SMA 20</div><div class="indicator-value" id="sma20">--</div><div class="indicator-subtext">5m Period</div></div>
+      <div class="indicator-card"><div class="indicator-label">SMA 50</div><div class="indicator-value" id="sma50">--</div><div class="indicator-subtext">5m Period</div></div>
+      <div class="indicator-card"><div class="indicator-label">ATR (14)</div><div class="indicator-value" id="atr">--</div><div class="indicator-subtext">5m Volatility</div></div>
+      <div class="indicator-card"><div class="indicator-label">Recent High</div><div class="indicator-value" id="recentHigh">--</div><div class="indicator-subtext">Last 20 candles</div></div>
+      <div class="indicator-card"><div class="indicator-label">Recent Low</div><div class="indicator-value" id="recentLow">--</div><div class="indicator-subtext">Last 20 candles</div></div>
+      <div class="indicator-card"><div class="indicator-label">ATR %</div><div class="indicator-value" id="atrPercent">--</div><div class="indicator-subtext">Price Volatility</div></div>
+    </div>
+
+    <div class="signal-section">
+      <h3 style="font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Short-Term Signal (5m Breakout)</h3>
+      <div class="signal-box" id="signalBox">
+        <div class="signal-title">
+          <div class="signal-title-left">
+            <span class="signal-icon" id="signalIcon"></span>
+            <span id="signalText">Loading...</span>
+          </div>
+          <button class="signal-help" onclick="toggleHelp('help5m')">❔ Help</button>
+        </div>
+        <div class="signal-conditions" id="signalConditions">Waiting for data...</div>
+        <div class="signal-help-content" id="help5m">
+          <strong>5m BUY</strong>: Price &gt; recent 20‑candle high, SMA20 &gt; SMA50, ATR% &gt; 0.5%<br>
+          <strong>5m SELL</strong>: Price &lt; recent 20‑candle low, SMA20 &lt; SMA50, ATR% &gt; 0.5%<br>
+          Signals evaluate only on <em>new 5m candles</em>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LONG-TERM -->
+  <div id="longTermSection" class="hidden">
+    <div class="price-section">
+      <div class="price-display">
+        <div class="price-item"><div class="price-label">Current Price</div><div class="price-value" id="currentPriceLT">--</div><div class="price-change" id="priceChangeLT">--</div></div>
+        <div class="price-item"><div class="price-label">Daily Close</div><div class="price-value" id="dailyClose">--</div></div>
+        <div class="price-item"><div class="price-label">20-Day High</div><div class="price-value" id="dayHigh20">--</div></div>
+        <div class="price-item"><div class="price-label">20-Day Low</div><div class="price-value" id="dayLow20">--</div></div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-wrapper">
+        <canvas id="dailyChart"></canvas>
+      </div>
+    </div>
+
+    <div class="indicators-grid">
+      <div class="indicator-card"><div class="indicator-label">EMA 20</div><div class="indicator-value" id="ema20">--</div><div class="indicator-subtext">Daily</div></div>
+      <div class="indicator-card"><div class="indicator-label">EMA 50</div><div class="indicator-value" id="ema50">--</div><div class="indicator-subtext">Daily</div></div>
+      <div class="indicator-card"><div class="indicator-label">EMA 200</div><div class="indicator-value" id="ema200">--</div><div class="indicator-subtext">Daily</div></div>
+      <div class="indicator-card"><div class="indicator-label">RSI (14)</div><div class="indicator-value" id="rsi14">--</div><div class="indicator-subtext">Daily</div></div>
+      <div class="indicator-card"><div class="indicator-label">ATR (14)</div><div class="indicator-value" id="atrDaily">--</div><div class="indicator-subtext">Daily USD</div></div>
+      <div class="indicator-card"><div class="indicator-label">ATR % (Daily)</div><div class="indicator-value" id="atrDailyPercent">--</div><div class="indicator-subtext">Daily Volatility</div></div>
+    </div>
+
+    <div class="signal-section">
+      <h3 style="font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Long-Term Signal (Daily Swing)</h3>
+      <div class="signal-box" id="signalBoxLT">
+        <div class="signal-title">
+          <div class="signal-title-left">
+            <span class="signal-icon" id="signalIconLT"></span>
+            <span id="signalTextLT">Loading...</span>
+          </div>
+          <button class="signal-help" onclick="toggleHelp('helpDaily')">❔ Help</button>
+        </div>
+        <div class="signal-conditions" id="signalConditionsLT">Waiting for daily data...</div>
+        <div class="signal-help-content" id="helpDaily">
+          <strong>Daily BUY</strong>: Close &gt; EMA20, (EMA50 &gt; EMA200 <em>or</em> Close &gt; 20‑day high &amp; RSI&gt;55), ATR% &gt; 2%, RSI&lt;75<br>
+          <strong>Daily SELL</strong>: Close ≤ EMA20 and (EMA50 &lt; EMA200 <em>or</em> Close &lt; 20‑day low &amp; RSI&lt;45)<br>
+          Signals evaluate only on <em>new daily candles</em>.
+        </div>
+      </div>
+    </div>
+
+    <div class="signals-table">
+      <h3>Recent Long-Term Signals</h3>
+      <table>
+        <thead><tr><th>Date</th><th>Signal</th><th>Entry</th><th>Rationale</th></tr></thead>
+        <tbody id="ltSignalsTableBody"><tr><td>--</td><td>--</td><td>--</td><td>--</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="signals-table" id="stSignalsTable">
+    <h3>Recent Short-Term Signals</h3>
+    <table>
+      <thead><tr><th>Time</th><th>Signal</th><th>Price</th><th>Conditions</th></tr></thead>
+      <tbody id="stSignalsTableBody"><tr><td>--</td><td>--</td><td>--</td><td>--</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- ABOUT / METHODOLOGY -->
+  <div class="signal-section" style="margin-top:16px;">
+    <h3 style="font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">ℹ️ About This Dashboard</h3>
+    <div class="signal-box neutral" style="border-left-color: var(--color-primary);">
+      <div class="signal-title">
+        <div class="signal-title-left">
+          <span class="signal-icon" style="background: var(--color-primary);"></span>
+          <span>Methodology & Expected Variations</span>
+        </div>
+      </div>
+      <div class="signal-conditions">
+        <div><strong>Price % next to “Current Price”</strong>: Rolling 24‑hour change reported by Binance (latest price vs price 24 hours ago).</div>
+        <hr style="border:0;border-top:1px solid rgba(148,163,184,0.15);margin:8px 0;">
+        <div style="margin-bottom:6px;"><strong>Short‑Term (5m) BUY</strong> when all are true:</div>
+        <ul style="margin-left:16px;">
+          <li>Price &gt; recent 20‑candle high (5m)</li>
+          <li>SMA20 &gt; SMA50 (5m)</li>
+          <li><strong>ATR% &gt; 0.5%</strong> (volatility filter, 5m)</li>
+        </ul>
+        <div style="margin-top:6px;margin-bottom:6px;"><strong>Short‑Term (5m) SELL</strong> when all are true:</div>
+        <ul style="margin-left:16px;">
+          <li>Price &lt; recent 20‑candle low (5m)</li>
+          <li>SMA20 &lt; SMA50 (5m)</li>
+          <li><strong>ATR% &gt; 0.5%</strong> (volatility filter, 5m)</li>
+        </ul>
+        <div style="margin-top:8px;">Short‑term signals expect ~<strong>≥0.5%</strong> intraday volatility (ATR(14)/price).</div>
+
+        <hr style="border:0;border-top:1px solid rgba(148,163,184,0.15);margin:8px 0;">
+
+        <div style="margin-bottom:6px;"><strong>Long‑Term (Daily) BUY</strong> when all are true:</div>
+        <ul style="margin-left:16px;">
+          <li>Regime: Close &gt; EMA20 (daily)</li>
+          <li>Trigger: Golden Cross (EMA50 &gt; EMA200) <em>or</em> Close &gt; 20‑day high with RSI(14) &gt; 55</li>
+          <li><strong>ATR% &gt; 2%</strong> (volatility filter, daily)</li>
+          <li>RSI(14) &lt; 75</li>
+        </ul>
+        <div style="margin-top:6px;margin-bottom:6px;"><strong>Long‑Term (Daily) SELL</strong> when all are true:</div>
+        <ul style="margin-left:16px;">
+          <li>Regime: Close ≤ EMA20 (daily)</li>
+          <li>Trigger: Death Cross (EMA50 &lt; EMA200) <em>or</em> Close &lt; 20‑day low with RSI(14) &lt; 45</li>
+        </ul>
+        <div style="margin-top:8px;">Long‑term signals expect ~<strong>≥2%</strong> daily volatility (ATR(14)/price).</div>
+
+        <hr style="border:0;border-top:1px solid rgba(148,163,184,0.15);margin:8px 0;">
+        <div><strong>Notes</strong>:
+          <ul style="margin-left:16px;">
+            <li>Signals are evaluated only on <em>new</em> candles for their timeframe (5m close / daily close).</li>
+            <li>ATR% is ATR(14) / current price × 100 using OHLC data.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This dashboard is provided for <strong>entertainment and educational purposes only</strong> and <strong>does not constitute financial advice</strong>. Trading involves substantial risk. Always do your own research and consider consulting a licensed financial professional.
+  </div>
+
+  <div class="alert-log"><h3>Alert Log</h3><div id="alertList"></div></div>
+
+  <div class="controls">
+    <button class="btn btn-primary" onclick="openTelegramModal()">📱 Configure Alerts</button>
+    <button class="btn btn-secondary" onclick="toggleAutoUpdate()">⏸ Pause Updates</button>
+    <button class="btn btn-secondary" onclick="clearAlerts()">🗑 Clear Log</button>
+  </div>
+
+  <div class="status-text">
+    <span class="loading" id="loadingDot"></span>
+    <span id="updateStatus">Last update: --</span> | Short-term: 60s | Long-term: 60s
+  </div>
+</div>
+
+<!-- Telegram Modal (minimal styles inline) -->
+<div class="hidden" id="telegramModal" style="position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:none;">
+  <div class="modal-content" style="margin:auto;position:relative;top:10%;max-width:450px;">
+    <div class="modal-header">🤖 Alert Configuration</div>
+    <label class="modal-label">Telegram Bot Token</label>
+    <input type="password" class="modal-input" id="telegramTokenInput" placeholder="123456789:ABCDefGHIjklmnoPQRstuvWXYZ" onkeypress="handleModalKeyPress(event)">
+    <label class="modal-label">Your Chat ID</label>
+    <input type="text" class="modal-input" id="telegramChatIdInput" placeholder="987654321" onkeypress="handleModalKeyPress(event)">
+    <label class="modal-label">Alert Preferences</label>
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;"><input type="checkbox" id="alertShortTerm" checked> Short-term</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;"><input type="checkbox" id="alertLongTerm" checked> Long-term</label>
+    </div>
+    <div class="modal-info"><strong>How to get Chat ID:</strong> Message your bot, then visit: https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates and find the "chat" → "id" value.</div>
+    <div class="modal-info"><strong>Security:</strong> Values stored in session memory only. Cleared when browser closes.</div>
+    <div class="modal-buttons" style="display:flex;gap:8px;margin-top:16px;">
+      <button class="modal-btn-confirm" onclick="confirmTelegramConfig()" style="flex:1;padding:10px;border:none;border-radius:6px;font-size:12px;font-weight:600;background:var(--color-primary);color:#0f172a;">Save Configuration</button>
+      <button class="modal-btn-cancel" onclick="closeTelegramModal()" style="flex:1;padding:10px;border:1px solid var(--color-primary);border-radius:6px;font-size:12px;font-weight:600;background:transparent;color:var(--color-primary);">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let state = {
+  prices5m: [], pricesDaily: [],
+  currentPrice: null, high24h: null, low24h: null, volume24h: null, change24h: 0,
+  signal: 'NEUTRAL', signalLT: 'NEUTRAL',
+  indicators: null, indicatorsLT: null,
+  ltSignalHistory: [], alerts: [],
+  autoUpdate: true, chart: null, chartDaily: null,
+  updateInterval: null, updateIntervalLT: null,
+  lastUpdate: null, lastUpdateLT: null,
+  last5mCandleTime: null, lastDailyCandleTime: null,
+  telegramToken: null, telegramChatId: null,
+  telegramAlertShortTerm: true, telegramAlertLongTerm: true,
+  strategy: 'shortterm'
+};
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  state.telegramToken = sessionStorage.getItem('telegramBotToken');
+  state.telegramChatId = sessionStorage.getItem('telegramChatId');
+  state.telegramAlertShortTerm = sessionStorage.getItem('telegramAlertShortTerm') !== 'false';
+  state.telegramAlertLongTerm  = sessionStorage.getItem('telegramAlertLongTerm')  !== 'false';
+
+  fetchBTCData();
+  fetchDailyBTCData();
+
+  if (state.autoUpdate) {
+    state.updateInterval   = setInterval(fetchBTCData, 60000);
+    state.updateIntervalLT = setInterval(fetchDailyBTCData, 60000);
+  }
+});
+
+// ===== STRATEGY SWITCH =====
+function switchStrategy(strategy){
+  state.strategy = strategy;
+  document.getElementById('shortTermSection').classList.toggle('hidden', strategy !== 'shortterm');
+  document.getElementById('longTermSection').classList.toggle('hidden', strategy !== 'longterm');
+  document.getElementById('toggleShort').classList.toggle('active', strategy === 'shortterm');
+  document.getElementById('toggleLong').classList.toggle('active', strategy === 'longterm');
+  document.getElementById('stSignalsTable').classList.toggle('hidden', strategy !== 'shortterm');
+}
+
+// ===== HELP TOGGLES =====
+function toggleHelp(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('active');
+}
+
+// ===== TELEGRAM MODAL =====
+function openTelegramModal(){ document.getElementById('telegramModal').style.display='block'; }
+function closeTelegramModal(){ document.getElementById('telegramModal').style.display='none'; }
+function handleModalKeyPress(e){ if(e.key==='Enter') confirmTelegramConfig(); else if(e.key==='Escape') closeTelegramModal(); }
+function validateTelegramToken(t){ return /^\d{8,10}:[A-Za-z0-9_-]{35,}$/.test((t||'').trim()); }
+function validateChatId(id){ return /^-?\d+$/.test((id||'').trim()); }
+function confirmTelegramConfig(){
+  const token = document.getElementById('telegramTokenInput').value.trim();
+  const chatId= document.getElementById('telegramChatIdInput').value.trim();
+  if(!token || !validateTelegramToken(token)) { logAlert('ERROR','Invalid Telegram token format','neutral'); return; }
+  if(!chatId|| !validateChatId(chatId)) { logAlert('ERROR','Invalid Chat ID format','neutral'); return; }
+  sessionStorage.setItem('telegramBotToken', token);
+  sessionStorage.setItem('telegramChatId', chatId);
+  sessionStorage.setItem('telegramAlertShortTerm', document.getElementById('alertShortTerm').checked);
+  sessionStorage.setItem('telegramAlertLongTerm',  document.getElementById('alertLongTerm').checked);
+  state.telegramToken = token; state.telegramChatId = chatId;
+  state.telegramAlertShortTerm = document.getElementById('alertShortTerm').checked;
+  state.telegramAlertLongTerm  = document.getElementById('alertLongTerm').checked;
+  logAlert('SYSTEM','Telegram configuration saved successfully','neutral');
+  closeTelegramModal();
+}
+
+// ===== API: BINANCE =====
+async function fetchBTCData(){
+  try{
+    const tRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+    if(!tRes.ok) throw new Error(`Ticker API error: ${tRes.status}`);
+    const t = await tRes.json();
+    state.currentPrice = parseFloat(t.lastPrice);
+    state.change24h    = parseFloat(t.priceChangePercent);
+    state.high24h      = parseFloat(t.highPrice);
+    state.low24h       = parseFloat(t.lowPrice);
+    state.volume24h    = parseFloat(t.quoteVolume);
+
+    const kRes = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=5m&limit=500');
+    if(!kRes.ok) throw new Error(`5m klines API error: ${kRes.status}`);
+    const k = await kRes.json();
+    state.prices5m = k.map(c=>({ time:c[0], open:+c[1], high:+c[2], low:+c[3], close:+c[4] }));
+
+    if(state.prices5m.length>=50){
+      const latestTime = state.prices5m[state.prices5m.length-1].time;
+      const isNewCandle = latestTime !== state.last5mCandleTime;
+      computeIndicators();
+      updateUI();
+      if(isNewCandle){
+        generateSignalFromState();
+        state.last5mCandleTime = latestTime;
+      }
+    } else {
+      logAlert('WARNING',`Insufficient 5m data (${state.prices5m.length} candles)`,'neutral');
+    }
+  }catch(e){ console.error('5m Fetch error:', e); logAlert('ERROR',`5m data fetch failed: ${e.message}`,'neutral'); }
+}
+
+async function fetchDailyBTCData(){
+  try{
+    const dRes = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=500');
+    if(!dRes.ok) throw new Error(`Daily klines API error: ${dRes.status}`);
+    const d = await dRes.json();
+    state.pricesDaily = d.map(c=>({ time:c[0], open:+c[1], high:+c[2], low:+c[3], close:+c[4] }));
+
+    if(state.pricesDaily.length>=200){
+      const latestTime = state.pricesDaily[state.pricesDaily.length-1].time;
+      const isNewDaily = latestTime !== state.lastDailyCandleTime;
+      computeIndicatorsLT();
+      updateUILT();
+      if(isNewDaily){
+        generateSignalLTFromState();
+        state.lastDailyCandleTime = latestTime;
+      }
+    } else {
+      logAlert('WARNING',`Insufficient daily data (${state.pricesDaily.length} candles)`,'neutral');
+    }
+  }catch(e){ console.error('Daily Fetch error:', e); logAlert('ERROR',`Daily data fetch failed: ${e.message}`,'neutral'); }
+}
+
+// ===== INDICATORS =====
+function computeIndicators(){
+  if(state.prices5m.length<50) return;
+  const closes = state.prices5m.map(p=>p.close);
+  const highs  = state.prices5m.map(p=>p.high);
+  const lows   = state.prices5m.map(p=>p.low);
+  const sma20 = computeSMA(closes,20); const sma50 = computeSMA(closes,50);
+  const atrVal = computeATRFromOHLC(highs,lows,closes,14);
+  const atrPercent = atrVal && state.currentPrice ? ((atrVal/state.currentPrice)*100).toFixed(2) : null;
+  const last20High = Math.max(...highs.slice(-20));
+  const last20Low  = Math.min(...lows.slice(-20));
+  state.indicators = { sma20, sma50, atr:atrVal, atrPercent, recentHigh:last20High, recentLow:last20Low };
+}
+
+function computeIndicatorsLT(){
+  if(state.pricesDaily.length<200) return;
+  const closes = state.pricesDaily.map(p=>p.close);
+  const highs  = state.pricesDaily.map(p=>p.high);
+  const lows   = state.pricesDaily.map(p=>p.low);
+  const ema20 = computeEMA(closes,20); const ema50 = computeEMA(closes,50); const ema200 = computeEMA(closes,200);
+  const rsi14 = computeRSI(closes,14);
+  const atrVal = computeATRFromOHLC(highs,lows,closes,14);
+  const atrPercent = atrVal && state.currentPrice ? ((atrVal/state.currentPrice)*100).toFixed(2) : null;
+  const dayHigh20 = Math.max(...highs.slice(-20));
+  const dayLow20  = Math.min(...lows.slice(-20));
+  state.indicatorsLT = { ema20, ema50, ema200, rsi14, atr:atrVal, atrPercent, dayHigh20, dayLow20 };
+}
+
+// ===== SIGNALS =====
+function generateSignalFromState(){
+  const closes = state.prices5m.map(p=>p.close);
+  const i = state.indicators || {}; const { sma20, sma50, atr, atrPercent, recentHigh, recentLow } = i;
+  generateSignal(closes, sma20, sma50, atr, atrPercent, recentHigh, recentLow);
+}
+function generateSignalLTFromState(){
+  const closes = state.pricesDaily.map(p=>p.close);
+  const I = state.indicatorsLT || {}; const { ema20, ema50, ema200, rsi14, atr, atrPercent, dayHigh20, dayLow20 } = I;
+  generateSignalLT(closes, ema20, ema50, ema200, rsi14, atr, atrPercent, dayHigh20, dayLow20);
+}
+
+function generateSignal(closes, sma20, sma50, atr, atrPercent, recentHigh, recentLow){
+  if(!closes || closes.length===0) return;
+  const close = closes[closes.length-1];
+  const prevSignal = state.signal;
+  const atrPctNum = atrPercent ? parseFloat(atrPercent) : 0;
+  const buy = [
+    { label:'Price > 20-5m High', met: close>recentHigh },
+    { label:'SMA20 > SMA50', met: sma20!=null && sma50!=null && sma20>sma50 },
+    { label:`ATR ${atrPercent||'--'}% > 0.5%`, met: atrPctNum>0.5 }
+  ];
+  const sell = [
+    { label:'Price < 20-5m Low', met: close<recentLow },
+    { label:'SMA20 < SMA50', met: sma20!=null && sma50!=null && sma20<sma50 },
+    { label:`ATR ${atrPercent||'--'}% > 0.5%`, met: atrPctNum>0.5 }
+  ];
+  const buyMet = buy.every(c=>c.met); const sellMet = sell.every(c=>c.met);
+  let newSignal = 'NEUTRAL', conds = buy;
+  if(buyMet){ newSignal='BUY'; conds=buy; } else if(sellMet){ newSignal='SELL'; conds=sell; }
+  state.signal = newSignal; state.signalConditions = conds;
+  if(prevSignal!==newSignal && state.telegramAlertShortTerm){
+    logAlert('SIGNAL', `${newSignal} @ $${state.currentPrice?.toFixed(2)}`, newSignal.toLowerCase());
+    state.lastSignalTime = new Date();
+    addSTSignalToTable(newSignal, state.currentPrice || close);
+  }
+}
+
+function generateSignalLT(closes, ema20, ema50, ema200, rsi14, atr, atrPercent, dayHigh20, dayLow20){
+  if(!closes || closes.length===0) return;
+  const close = closes[closes.length-1];
+  const prevSignal = state.signalLT;
+  const trendFilter = ema20!=null && close>ema20;
+  const goldenCross = ema50!=null && ema200!=null && ema50>ema200;
+  const closeAboveHigh = close>dayHigh20;
+  const rsiAbove55 = rsi14!=null && rsi14>55;
+  const atrPctNum = atrPercent ? parseFloat(atrPercent) : 0;
+  const atrAbove2 = atrPctNum>2; const rsiBelow75 = rsi14!=null && rsi14<75;
+  const buyMet = trendFilter && ((goldenCross || (closeAboveHigh && rsiAbove55)) && atrAbove2 && rsiBelow75);
+  const deathCross = ema50!=null && ema200!=null && ema50<ema200;
+  const closeBelowLow = close<dayLow20; const rsiBelow45 = rsi14!=null && rsi14<45;
+  const sellMet = !trendFilter && (deathCross || (closeBelowLow && rsiBelow45));
+  let newSignal='NEUTRAL'; if(buyMet) newSignal='BUY'; else if(sellMet) newSignal='SELL';
+  state.signalLT = newSignal;
+  const conditions = [
+    { label:`Trend Filter: Close(${fmt0(close)}) > EMA20(${fmt0(ema20)})`, met: !!trendFilter },
+    { label:`Golden Cross: EMA50(${fmt0(ema50)}) > EMA200(${fmt0(ema200)})`, met: !!goldenCross },
+    { label:`Close > 20-day High (${fmt0(dayHigh20)})`, met: closeAboveHigh },
+    { label:`RSI(14) ${rsi14?.toFixed?.(1)??'--'} > 55`, met: !!rsiAbove55 },
+    { label:`ATR ${atrPercent||'--'}% > 2%`, met: atrAbove2 },
+    { label:`RSI ${rsi14?.toFixed?.(1)??'--'} < 75`, met: !!rsiBelow75 }
+  ];
+  state.signalConditionsLT = conditions;
+  if(prevSignal!==newSignal && state.telegramAlertLongTerm){
+    const rationale = goldenCross ? `Golden Cross + RSI ${rsi14?.toFixed?.(1)??'--'}` : closeBelowLow ? 'Death Cross + Below 20-day Low' : 'Regime Change';
+    logAlert('SIGNAL-LT', `${newSignal} @ $${state.currentPrice?.toFixed(2)} (${rationale})`, newSignal.toLowerCase());
+    state.lastSignalTimeLT = new Date();
+    addLTSignalToHistory(newSignal, state.currentPrice || close, rationale);
+  }
+}
+
+// ===== INDICATOR HELPERS =====
+function computeSMA(data, n){ if(!data||data.length<n) return null; const s=data.slice(-n); return s.reduce((a,b)=>a+b,0)/n; }
+function computeEMA(data, n){ if(!data||data.length<n) return null; const k=2/(n+1); let ema=data.slice(0,n).reduce((a,b)=>a+b,0)/n; for(let i=n;i<data.length;i++){ ema=data[i]*k+ema*(1-k);} return ema; }
+function computeRSI(data, n){ if(!data||data.length<n+1) return null; let g=0,l=0; for(let i=data.length-n;i<data.length;i++){ const d=data[i]-data[i-1]; if(d>0) g+=d; else l-=d; } const ag=g/n, al=l/n; if(al===0) return 100; const rs=ag/al; return 100-(100/(1+rs)); }
+function computeATRFromOHLC(highs,lows,closes,n){ if(!highs||!lows||!closes||highs.length<n+1) return null; const trs=[]; for(let i=1;i<highs.length;i++){ const tr=Math.max(highs[i]-lows[i], Math.abs(highs[i]-closes[i-1]), Math.abs(lows[i]-closes[i-1])); trs.push(tr);} const tail=trs.slice(-n); return tail.reduce((a,b)=>a+b,0)/n; }
+
+// ===== UI =====
+function updateUI(){
+  document.getElementById('currentPrice').textContent = `$${(state.currentPrice??0).toFixed(2)}`;
+  const ch = state.change24h??0; const ce=document.getElementById('priceChange');
+  ce.textContent = `${ch>0?'+':''}${ch.toFixed(2)}%`; ce.className = `price-change ${ch>0?'change-positive':'change-negative'}`;
+  document.getElementById('high24h').textContent = `$${(state.high24h??0).toFixed(0)}`;
+  document.getElementById('low24h').textContent  = `$${(state.low24h??0).toFixed(0)}`;
+  document.getElementById('vol24h').textContent  = `$${Number(state.volume24h??0).toLocaleString('en',{maximumFractionDigits:0})}`;
+  if(state.indicators){
+    document.getElementById('sma20').textContent = `$${(state.indicators.sma20??0).toFixed(2)}`;
+    document.getElementById('sma50').textContent = `$${(state.indicators.sma50??0).toFixed(2)}`;
+    document.getElementById('atr').textContent   = `$${(state.indicators.atr??0).toFixed(2)}`;
+    document.getElementById('atrPercent').textContent = `${state.indicators.atrPercent??'--'}%`;
+    document.getElementById('recentHigh').textContent = `$${(state.indicators.recentHigh??0).toFixed(2)}`;
+    document.getElementById('recentLow').textContent  = `$${(state.indicators.recentLow??0).toFixed(2)}`;
+  }
+  updateSignalBox(); updateChart();
+  state.lastUpdate = new Date();
+  document.getElementById('updateStatus').textContent = `Last update: ${state.lastUpdate.toLocaleTimeString()}`;
+}
+
+function updateUILT(){
+  document.getElementById('currentPriceLT').textContent = `$${(state.currentPrice??0).toFixed(2)}`;
+  const ch = state.change24h??0; const ce=document.getElementById('priceChangeLT');
+  ce.textContent = `${ch>0?'+':''}${ch.toFixed(2)}%`; ce.className = `price-change ${ch>0?'change-positive':'change-negative'}`;
+  const dailyClose = state.pricesDaily[state.pricesDaily.length-1]?.close || state.currentPrice || 0;
+  document.getElementById('dailyClose').textContent = `$${dailyClose.toFixed(0)}`;
+  if(state.indicatorsLT){
+    document.getElementById('dayHigh20').textContent = `$${(state.indicatorsLT.dayHigh20??0).toFixed(0)}`;
+    document.getElementById('dayLow20').textContent  = `$${(state.indicatorsLT.dayLow20??0).toFixed(0)}`;
+    document.getElementById('ema20').textContent  = `$${(state.indicatorsLT.ema20??0).toFixed(2)}`;
+    document.getElementById('ema50').textContent  = `$${(state.indicatorsLT.ema50??0).toFixed(2)}`;
+    document.getElementById('ema200').textContent = `$${(state.indicatorsLT.ema200??0).toFixed(2)}`;
+    document.getElementById('rsi14').textContent  = `${(state.indicatorsLT.rsi14??0).toFixed(1)}`;
+    document.getElementById('atrDaily').textContent = `$${(state.indicatorsLT.atr??0).toFixed(2)}`;
+    document.getElementById('atrDailyPercent').textContent = `${state.indicatorsLT.atrPercent??'--'}%`;
+  }
+  updateSignalBoxLT(); updateDailyChart();
+  state.lastUpdateLT = new Date();
+}
+
+function updateSignalBox(){
+  const box=document.getElementById('signalBox'), txt=document.getElementById('signalText'), icon=document.getElementById('signalIcon'), conds=document.getElementById('signalConditions');
+  box.className = `signal-box ${state.signal.toLowerCase()}`;
+  txt.textContent = `${state.signal} Signal (5m)`;
+  icon.style.background = state.signal==='BUY'?'var(--color-success)':state.signal==='SELL'?'var(--color-danger)':'var(--color-warning)';
+  if(state.signalConditions){ conds.innerHTML = state.signalConditions.map(c=>`<div class="${c.met?'condition-met':'condition-unmet'}">• ${c.label}</div>`).join(''); }
+}
+
+function updateSignalBoxLT(){
+  const box=document.getElementById('signalBoxLT'), txt=document.getElementById('signalTextLT'), icon=document.getElementById('signalIconLT'), conds=document.getElementById('signalConditionsLT');
+  box.className = `signal-box ${state.signalLT.toLowerCase()}`;
+  txt.textContent = `${state.signalLT} Signal (Daily Swing)`;
+  icon.style.background = state.signalLT==='BUY'?'var(--color-success)':state.signalLT==='SELL'?'var(--color-danger)':'var(--color-warning)';
+  if(state.signalConditionsLT){ conds.innerHTML = state.signalConditionsLT.map(c=>`<div class="${c.met?'condition-met':'condition-unmet'}">• ${c.label}</div>`).join(''); }
+}
+
+// ===== CHARTS =====
+function updateChart(){
+  if(!state.prices5m || state.prices5m.length<2) return;
+  const labels = state.prices5m.map(p=> new Date(p.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
+  const closes = state.prices5m.map(p=>p.close);
+  const sma20 = computeSMAArray(closes,20); const sma50 = computeSMAArray(closes,50);
+  const data = { labels, datasets:[
+    { label:'Price (5m)', data:closes, borderColor:'#38bdf8', backgroundColor:'rgba(56,189,248,0.1)', borderWidth:2, fill:true, tension:.3, pointRadius:0, yAxisID:'y' },
+    { label:'SMA20', data:sma20, borderColor:'#22c55e', borderWidth:1.5, fill:false, tension:.3, pointRadius:0, borderDash:[5,5], yAxisID:'y' },
+    { label:'SMA50', data:sma50, borderColor:'#f59e0b', borderWidth:1.5, fill:false, tension:.3, pointRadius:0, borderDash:[5,5], yAxisID:'y' }
+  ]};
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  if(state.chart){ state.chart.data=data; state.chart.update('none'); }
+  else { state.chart = createChart(ctx, data); }
+}
+
+function updateDailyChart(){
+  if(!state.pricesDaily || state.pricesDaily.length<2) return;
+  const labels = state.pricesDaily.map(p=> new Date(p.time).toLocaleDateString([], {month:'short',day:'numeric'}));
+  const closes = state.pricesDaily.map(p=>p.close);
+  const ema20 = computeEMAArray(closes,20); const ema50 = computeEMAArray(closes,50); const ema200 = computeEMAArray(closes,200);
+  const data = { labels, datasets:[
+    { label:'Daily Price', data:closes, borderColor:'#38bdf8', backgroundColor:'rgba(56,189,248,0.1)', borderWidth:2, fill:true, tension:.3, pointRadius:0, yAxisID:'y' },
+    { label:'EMA20', data:ema20, borderColor:'#22c55e', borderWidth:1.5, fill:false, tension:.3, pointRadius:0, borderDash:[5,5], yAxisID:'y' },
+    { label:'EMA50', data:ema50, borderColor:'#f59e0b', borderWidth:1.5, fill:false, tension:.3, pointRadius:0, borderDash:[5,5], yAxisID:'y' },
+    { label:'EMA200', data:ema200, borderColor:'#ef4444', borderWidth:1.5, fill:false, tension:.3, pointRadius:0, borderDash:[5,5], yAxisID:'y' }
+  ]};
+  const ctx = document.getElementById('dailyChart').getContext('2d');
+  if(state.chartDaily){ state.chartDaily.data=data; state.chartDaily.update('none'); }
+  else { state.chartDaily = createChart(ctx, data); }
+}
+
+function computeSMAArray(data,n){ return data.map((_,i)=> i<n-1?null: data.slice(i-n+1,i+1).reduce((a,b)=>a+b,0)/n ); }
+function computeEMAArray(data,n){ const arr=Array(data.length).fill(null); if(data.length<n) return arr; let ema=data.slice(0,n).reduce((a,b)=>a+b,0)/n; arr[n-1]=ema; const k=2/(n+1); for(let i=n;i<data.length;i++){ ema=data[i]*k+ema*(1-k); arr[i]=ema; } return arr; }
+function createChart(ctx, data){ return new Chart(ctx,{ type:'line', data, options:{ responsive:true, maintainAspectRatio:false, interaction:{intersect:false,mode:'index'}, plugins:{ legend:{display:true,position:'top',labels:{color:'#f1f5f9',font:{size:10},usePointStyle:true,padding:10}}, tooltip:{backgroundColor:'rgba(15,23,42,0.9)',borderColor:'#38bdf8',borderWidth:1,titleColor:'#f1f5f9',bodyColor:'#f1f5f9',padding:8,displayColors:true}}, scales:{ y:{type:'linear',display:true,position:'left',ticks:{color:'#cbd5e1',font:{size:9},callback:v=>'$'+Number(v).toLocaleString('en',{maximumFractionDigits:0})},grid:{color:'rgba(148,163,184,0.1)',drawBorder:false}}, x:{ticks:{color:'#cbd5e1',font:{size:9},maxRotation:45,minRotation:0},grid:{display:false,drawBorder:false}} } } }); }
+
+// ===== ALERTS & TABLES =====
+function logAlert(type,msg,cat='neutral'){ const a={time:new Date(),type:type,message:msg,category:cat}; state.alerts.unshift(a); if(state.alerts.length>50) state.alerts.pop(); const list=document.getElementById('alertList'); const el=document.createElement('div'); el.className=`alert-item alert-${cat}`; el.innerHTML=`<div class="alert-time">${a.time.toLocaleTimeString()}</div><div class="alert-message"><strong>${type}:</strong> ${msg}</div>`; list.insertBefore(el, list.firstChild); }
+function addSTSignalToTable(signal, price){ const tbody=document.getElementById('stSignalsTableBody'); if(!tbody) return; const row=tbody.insertRow(0); row.innerHTML=`<td>${new Date().toLocaleTimeString()}</td><td class="signal-${signal.toLowerCase()}">${signal}</td><td>$${(price??0).toFixed(2)}</td><td>SMA 20/50 + ATR > 0.5%</td>`; if(tbody.children.length>10) tbody.deleteRow(tbody.children.length-1); }
+function addLTSignalToHistory(signal, price, rationale){ state.ltSignalHistory.unshift({date:new Date().toLocaleDateString(),signal,price,rationale}); if(state.ltSignalHistory.length>10) state.ltSignalHistory.pop(); const tbody=document.getElementById('ltSignalsTableBody'); if(!tbody) return; tbody.innerHTML = state.ltSignalHistory.map(s=>`<tr><td>${s.date}</td><td class="signal-${s.signal.toLowerCase()}">${s.signal}</td><td>$${(s.price??0).toFixed(2)}</td><td>${s.rationale}</td></tr>`).join(''); }
+
+// ===== CONTROLS =====
+function toggleAutoUpdate(){ state.autoUpdate=!state.autoUpdate; if(state.autoUpdate){ state.updateInterval=setInterval(fetchBTCData,60000); state.updateIntervalLT=setInterval(fetchDailyBTCData,60000); logAlert('SYSTEM','Auto-update enabled','neutral'); } else { clearInterval(state.updateInterval); clearInterval(state.updateIntervalLT); logAlert('SYSTEM','Auto-update paused','neutral'); } }
+function clearAlerts(){ state.alerts=[]; document.getElementById('alertList').innerHTML=''; logAlert('SYSTEM','Alert log cleared','neutral'); }
+
+// ===== HELPERS =====
+function fmt0(v){ return (v==null||Number.isNaN(v))?'--':Number(v).toFixed(0); }
+</script>
+</body>
+</html>
