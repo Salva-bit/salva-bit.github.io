@@ -518,8 +518,8 @@
 
                 state.currentPrice = btc.usd;
                 state.change24h = btc.usd_24h_change;
-                state.high24h = btc.usd * (1 + btc.usd_24h_change / 100);
-                state.low24h = state.currentPrice - (state.high24h - state.currentPrice);
+                state.high24h = btc.usd * (1 + Math.abs(btc.usd_24h_change) / 100);
+                state.low24h = btc.usd * (1 - Math.abs(btc.usd_24h_change) / 100);
                 state.marketCap = (btc.usd_market_cap / 1e9).toFixed(0);
 
                 let pricePoints = [];
