@@ -735,7 +735,7 @@
                 datasets: [
                     {
                         label: 'Price (USDT)',
-                         priceData,
+                        data: priceData,
                         borderColor: '#38bdf8',
                         backgroundColor: 'rgba(56, 189, 248, 0.1)',
                         borderWidth: 2,
@@ -747,7 +747,7 @@
                     },
                     {
                         label: 'SMA20',
-                         sma20Data,
+                        data: sma20Data,
                         borderColor: '#22c55e',
                         borderWidth: 1.5,
                         fill: false,
@@ -758,7 +758,7 @@
                     },
                     {
                         label: 'SMA50',
-                         sma50Data,
+                        data: sma50Data,
                         borderColor: '#f59e0b',
                         borderWidth: 1.5,
                         fill: false,
@@ -778,7 +778,7 @@
             } else {
                 state.chart = new Chart(ctx, {
                     type: 'line',
-                     chartData,
+                    data: chartData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
