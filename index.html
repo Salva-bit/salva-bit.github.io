@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Price Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-bg: #0f172a;
+            --color-surface: #1e293b;
+            --color-text: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-success: #22c55e;
+            --color-danger: #ef4444;
+            --color-warning: #f59e0b;
+            --color-primary: #38bdf8;
+            --color-accent: #06b6d4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            padding: 12px;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-surface);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--color-success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .price-section {
+            background: var(--color-surface);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .price-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .price-item {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .price-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .price-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .price-change {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .change-positive {
+            color: var(--color-success);
+        }
+
+        .change-negative {
+            color: var(--color-danger);
+        }
+
+        .chart-container {
+            background: var(--color-surface);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            height: 350px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 100%;
+        }
+
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .indicator-card {
+            background: var(--color-surface);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .indicator-label {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .indicator-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        .signal-section {
+            background: var(--color-surface);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 2px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .signal-box {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--color-text-secondary);
+        }
+
+        .signal-box.buy {
+            border-left-color: var(--color-success);
+        }
+
+        .signal-box.sell {
+            border-left-color: var(--color-danger);
+        }
+
+        .signal-box.neutral {
+            border-left-color: var(--color-warning);
+        }
+
+        .signal-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .signal-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .signal-conditions {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .alert-log {
+            background: var(--color-surface);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .alert-log h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .alert-item {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--color-accent);
+            font-size: 12px;
+        }
+
+        .alert-time {
+            color: var(--color-text-secondary);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .alert-message {
+            color: var(--color-text);
+        }
+
+        .alert-buy {
+            border-left-color: var(--color-success);
+        }
+
+        .alert-sell {
+            border-left-color: var(--color-danger);
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: 12px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: var(--color-success);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+            margin-right: 4px;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+
+            header, .price-section, .chart-container, .indicator-card, .signal-section, .alert-log {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .price-display {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .indicators-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .btn {
+                min-width: 100px;
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .price-display {
+                grid-template-columns: 1fr;
+            }
+
+            .indicators-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 3px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span class="status-indicator"></span>
+                Bitcoin Monitor
+            </h1>
+            <p style="font-size: 12px; color: var(--color-text-secondary); margin-top: 4px;">Live BTC/USDT Price & Technical Analysis</p>
+        </header>
+
+        <div class="price-section">
+            <div class="price-display">
+                <div class="price-item">
+                    <div class="price-label">Current Price</div>
+                    <div class="price-value" id="currentPrice">--</div>
+                    <div class="price-change" id="priceChange">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">24h High</div>
+                    <div class="price-value" id="high24h">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">24h Low</div>
+                    <div class="price-value" id="low24h">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Market Cap (B)</div>
+                    <div class="price-value" id="marketCap">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="indicators-grid">
+            <div class="indicator-card">
+                <div class="indicator-label">SMA 20</div>
+                <div class="indicator-value" id="sma20">--</div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-label">SMA 50</div>
+                <div class="indicator-value" id="sma50">--</div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-label">ATR (14)</div>
+                <div class="indicator-value" id="atr">--</div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-label">Recent High (20)</div>
+                <div class="indicator-value" id="recentHigh">--</div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-label">Recent Low (20)</div>
+                <div class="indicator-value" id="recentLow">--</div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-label">ATR %</div>
+                <div class="indicator-value" id="atrPercent">--</div>
+            </div>
+        </div>
+
+        <div class="signal-section">
+            <h3 style="font-size: 14px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Trading Signal</h3>
+            <div class="signal-box" id="signalBox">
+                <div class="signal-title">
+                    <span class="signal-icon" id="signalIcon"></span>
+                    <span id="signalText">Loading...</span>
+                </div>
+                <div class="signal-conditions" id="signalConditions">
+                    Waiting for data...
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-log scrollbar-thin">
+            <h3>Alert Log</h3>
+            <div id="alertList"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="sendTelegramAlert()">📱 Send Telegram</button>
+            <button class="btn btn-secondary" onclick="toggleAutoUpdate()">⏸ Pause Updates</button>
+            <button class="btn btn-secondary" onclick="clearAlerts()">🗑 Clear Log</button>
+        </div>
+
+        <div class="status-text">
+            <span class="loading" id="loadingDot"></span>
+            <span id="updateStatus">Last update: --</span> | Update interval: 60s
+        </div>
+    </div>
+
+    <script>
+        // ============ STATE MANAGEMENT ============
+        let state = {
+            prices: [],
+            currentPrice: null,
+            high24h: null,
+            low24h: null,
+            marketCap: null,
+            previousPrice: null,
+            signal: 'NEUTRAL',
+            lastSignalTime: null,
+            alerts: [],
+            autoUpdate: true,
+            chart: null,
+            updateInterval: null,
+            lastUpdate: new Date()
+        };
+
+        // ============ API CALLS ============
+        async function fetchBTCData() {
+            try {
+                // Fetch current price and market data
+                const priceResponse = await fetch(
+                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true'
+                );
+                const priceData = await priceResponse.json();
+                const btc = priceData.bitcoin;
+
+                state.previousPrice = state.currentPrice;
+                state.currentPrice = btc.usd;
+                state.high24h = btc.usd * (1 + btc.usd_24h_change / 100);
+                state.low24h = state.currentPrice - (state.high24h - state.currentPrice);
+                state.marketCap = (btc.usd_market_cap / 1e9).toFixed(0);
+
+                // Fetch historical OHLCV data for the last 200 5-minute candles
+                const historyResponse = await fetch(
+                    'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=5m'
+                );
+                const historyData = await historyResponse.json();
+
+                // Extract prices and compute OHLCV equivalents
+                const pricePoints = historyData.prices.map(p => ({
+                    time: p[0],
+                    close: p[1]
+                }));
+
+                // Keep last 200 candles
+                state.prices = pricePoints.slice(-200);
+
+                // Compute technical indicators
+                computeIndicators();
+                updateUI();
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                logAlert('ERROR', `Data fetch failed: ${error.message}`, 'neutral');
+            }
+        }
+
+        // ============ TECHNICAL INDICATORS ============
+        function computeIndicators() {
+            if (state.prices.length < 50) return;
+
+            const closes = state.prices.map(p => p.close);
+
+            // SMA 20
+            const sma20 = computeSMA(closes, 20);
+
+            // SMA 50
+            const sma50 = computeSMA(closes, 50);
+
+            // ATR (14) - using simplified version with high/low estimates
+            const atr = computeATR(closes, 14);
+            const atrPercent = ((atr / state.currentPrice) * 100).toFixed(2);
+
+            // Recent 20-candle high/low
+            const recent20 = closes.slice(-20);
+            const recentHigh = Math.max(...recent20);
+            const recentLow = Math.min(...recent20);
+
+            // Store in state
+            state.indicators = {
+                sma20,
+                sma50,
+                atr,
+                atrPercent,
+                recentHigh,
+                recentLow
+            };
+
+            // Generate signal
+            generateSignal(closes, sma20, sma50, atr, atrPercent, recentHigh, recentLow);
+        }
+
+        function computeSMA(data, period) {
+            if (data.length < period) return null;
+            const slice = data.slice(-period);
+            return slice.reduce((a, b) => a + b, 0) / period;
+        }
+
+        function computeATR(data, period) {
+            if (data.length < period) return null;
+
+            const trValues = [];
+            for (let i = 1; i < data.length; i++) {
+                const high = data[i];
+                const low = data[i] * 0.99; // Estimate low
+                const prevClose = data[i - 1];
+
+                const tr = Math.max(
+                    high - low,
+                    Math.abs(high - prevClose),
+                    Math.abs(low - prevClose)
+                );
+                trValues.push(tr);
+            }
+
+            const atrData = trValues.slice(-period);
+            return atrData.reduce((a, b) => a + b, 0) / period;
+        }
+
+        function generateSignal(closes, sma20, sma50, atr, atrPercent, recentHigh, recentLow) {
+            const close = closes[closes.length - 1];
+            const prevSignal = state.signal;
+
+            let newSignal = 'NEUTRAL';
+            let conditions = [];
+
+            // BUY Conditions
+            const buyConditions = [
+                close > recentHigh ? 'Price > Recent High ✓' : 'Price > Recent High ✗',
+                sma20 > sma50 ? 'SMA20 > SMA50 ✓' : 'SMA20 > SMA50 ✗',
+                parseFloat(atrPercent) > 0.5 ? `ATR ${atrPercent}% > 0.5% ✓` : `ATR ${atrPercent}% > 0.5% ✗`
+            ];
+
+            const buyMet = (close > recentHigh) && (sma20 > sma50) && (parseFloat(atrPercent) > 0.5);
+
+            // SELL Conditions
+            const sellConditions = [
+                close < recentLow ? 'Price < Recent Low ✓' : 'Price < Recent Low ✗',
+                sma20 < sma50 ? 'SMA20 < SMA50 ✓' : 'SMA20 < SMA50 ✗',
+                parseFloat(atrPercent) > 0.5 ? `ATR ${atrPercent}% > 0.5% ✓` : `ATR ${atrPercent}% > 0.5% ✗`
+            ];
+
+            const sellMet = (close < recentLow) && (sma20 < sma50) && (parseFloat(atrPercent) > 0.5);
+
+            if (buyMet) {
+                newSignal = 'BUY';
+                conditions = buyConditions;
+            } else if (sellMet) {
+                newSignal = 'SELL';
+                conditions = sellConditions;
+            } else {
+                newSignal = 'NEUTRAL';
+                conditions = buyMet ? buyConditions : sellConditions;
+            }
+
+            state.signal = newSignal;
+            state.signalConditions = conditions;
+
+            // Alert on signal change
+            if (prevSignal !== newSignal && prevSignal !== 'NEUTRAL') {
+                logAlert('SIGNAL', `${newSignal} signal generated at $${state.currentPrice.toFixed(2)}`, newSignal.toLowerCase());
+                state.lastSignalTime = new Date();
+            }
+        }
+
+        // ============ UI UPDATES ============
+        function updateUI() {
+            // Update prices
+            document.getElementById('currentPrice').textContent = `$${state.currentPrice.toFixed(2)}`;
+
+            const change24h = ((state.currentPrice - state.previousPrice) / state.previousPrice * 100 || 0).toFixed(2);
+            const changeElement = document.getElementById('priceChange');
+            changeElement.textContent = `${change24h > 0 ? '+' : ''}${change24h}%`;
+            changeElement.className = `price-change ${change24h > 0 ? 'change-positive' : 'change-negative'}`;
+
+            document.getElementById('high24h').textContent = `$${state.high24h.toFixed(0)}`;
+            document.getElementById('low24h').textContent = `$${state.low24h.toFixed(0)}`;
+            document.getElementById('marketCap').textContent = `$${state.marketCap}`;
+
+            // Update indicators
+            if (state.indicators) {
+                document.getElementById('sma20').textContent = `$${state.indicators.sma20.toFixed(2)}`;
+                document.getElementById('sma50').textContent = `$${state.indicators.sma50.toFixed(2)}`;
+                document.getElementById('atr').textContent = `$${state.indicators.atr.toFixed(2)}`;
+                document.getElementById('atrPercent').textContent = `${state.indicators.atrPercent}%`;
+                document.getElementById('recentHigh').textContent = `$${state.indicators.recentHigh.toFixed(2)}`;
+                document.getElementById('recentLow').textContent = `$${state.indicators.recentLow.toFixed(2)}`;
+            }
+
+            // Update signal
+            updateSignalBox();
+
+            // Update chart
+            updateChart();
+
+            // Update timestamp
+            state.lastUpdate = new Date();
+            document.getElementById('updateStatus').textContent = `Last update: ${state.lastUpdate.toLocaleTimeString()}`;
+        }
+
+        function updateSignalBox() {
+            const signalBox = document.getElementById('signalBox');
+            const signalText = document.getElementById('signalText');
+            const signalIcon = document.getElementById('signalIcon');
+            const signalConditions = document.getElementById('signalConditions');
+
+            signalBox.className = `signal-box ${state.signal.toLowerCase()}`;
+
+            signalText.textContent = `${state.signal} Signal`;
+
+            if (state.signal === 'BUY') {
+                signalIcon.style.background = 'var(--color-success)';
+            } else if (state.signal === 'SELL') {
+                signalIcon.style.background = 'var(--color-danger)';
+            } else {
+                signalIcon.style.background = 'var(--color-warning)';
+            }
+
+            if (state.signalConditions) {
+                signalConditions.innerHTML = state.signalConditions.map(c => `• ${c}`).join('<br>');
+            }
+        }
+
+        function updateChart() {
+            if (state.prices.length < 2) return;
+
+            const labels = state.prices.map(p => {
+                const date = new Date(p.time);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            });
+
+            const priceData = state.prices.map(p => p.close);
+            const sma20Data = state.prices.length >= 20 ? 
+                state.prices.map((_, i) => {
+                    if (i < 19) return null;
+                    return state.prices.slice(i - 19, i + 1).reduce((a, p) => a + p.close, 0) / 20;
+                }) : state.prices.map(() => null);
+
+            const sma50Data = state.prices.length >= 50 ?
+                state.prices.map((_, i) => {
+                    if (i < 49) return null;
+                    return state.prices.slice(i - 49, i + 1).reduce((a, p) => a + p.close, 0) / 50;
+                }) : state.prices.map(() => null);
+
+            const chartData = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Price (USDT)',
+                        data: priceData,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'SMA20',
+                        data: sma20Data,
+                        borderColor: '#22c55e',
+                        borderWidth: 1.5,
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'SMA50',
+                        data: sma50Data,
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        yAxisID: 'y'
+                    }
+                ]
+            };
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+
+            if (state.chart) {
+                state.chart.data = chartData;
+                state.chart.update('none');
+            } else {
+                state.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: '#f1f5f9',
+                                    font: { size: 11 },
+                                    usePointStyle: true,
+                                    padding: 12
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                borderColor: '#38bdf8',
+                                borderWidth: 1,
+                                titleColor: '#f1f5f9',
+                                bodyColor: '#f1f5f9',
+                                padding: 10,
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                ticks: {
+                                    color: '#cbd5e1',
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString('en', { maximumFractionDigits: 0 });
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)',
+                                    drawBorder: false
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#cbd5e1',
+                                    font: { size: 9 },
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                },
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ============ ALERT MANAGEMENT ============
+        function logAlert(type, message, category = 'neutral') {
+            const alert = {
+                time: new Date(),
+                type: type,
+                message: message,
+                category: category
+            };
+
+            state.alerts.unshift(alert);
+            if (state.alerts.length > 50) state.alerts.pop();
+
+            const alertList = document.getElementById('alertList');
+            const alertElement = document.createElement('div');
+            alertElement.className = `alert-item alert-${category}`;
+            alertElement.innerHTML = `
+                <div class="alert-time">${alert.time.toLocaleTimeString()}</div>
+                <div class="alert-message"><strong>${type}:</strong> ${message}</div>
+            `;
+            alertList.insertBefore(alertElement, alertList.firstChild);
+        }
+
+        function sendTelegramAlert() {
+            const message = `
+🚨 Bitcoin Alert
+Signal: ${state.signal}
+Price: $${state.currentPrice.toFixed(2)}
+SMA20: $${state.indicators?.sma20.toFixed(2) || '--'}
+SMA50: $${state.indicators?.sma50.toFixed(2) || '--'}
+ATR: ${state.indicators?.atrPercent || '--'}%
+Time: ${new Date().toLocaleString()}
+
+Webhook integration ready: POST your webhook URL here
+            `;
+            logAlert('TELEGRAM', 'Alert placeholder sent (add webhook URL)', 'neutral');
+            console.log('Alert payload ready for webhook:', message);
+        }
+
+        function toggleAutoUpdate() {
+            state.autoUpdate = !state.autoUpdate;
+            const btn = event.target;
+            btn.textContent = state.autoUpdate ? '⏸ Pause Updates' : '▶ Resume Updates';
+            logAlert('SYSTEM', state.autoUpdate ? 'Updates resumed' : 'Updates paused', 'neutral');
+        }
+
+        function clearAlerts() {
+            state.alerts = [];
+            document.getElementById('alertList').innerHTML = '';
+            logAlert('SYSTEM', 'Alert log cleared', 'neutral');
+        }
+
+        // ============ INITIALIZATION ============
+        async function initialize() {
+            logAlert('SYSTEM', 'Monitor initialized', 'neutral');
+            await fetchBTCData();
+
+            state.updateInterval = setInterval(() => {
+                if (state.autoUpdate) {
+                    fetchBTCData();
+                }
+            }, 60000); // 60 second polling
+        }
+
+        // Start application
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+</html>
