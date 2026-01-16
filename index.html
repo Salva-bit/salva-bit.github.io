@@ -431,8 +431,9 @@
                 <div class="indicator-value" id="sma50">--</div>
             </div>
             <div class="indicator-card">
-                <div class="indicator-label">ATR (14)</div>
+                <div class="indicator-label">ATR (14) volatility</div>
                 <div class="indicator-value" id="atr">--</div>
+                <div style="font-size: 10px; color: var(--color-text-secondary); margin-top: 4px;">Avg True Range in USD</div>
             </div>
             <div class="indicator-card">
                 <div class="indicator-label">Recent High (20)</div>
@@ -486,7 +487,7 @@
             high24h: null,
             low24h: null,
             marketCap: null,
-            previousPrice: null,
+            change24h: 0,
             signal: 'NEUTRAL',
             lastSignalTime: null,
             alerts: [],
@@ -501,34 +502,58 @@
             try {
                 // Fetch current price and market data
                 const priceResponse = await fetch(
-                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true'
+                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true',
+                    { headers: { 'Accept': 'application/json' } }
                 );
+                
+                if (!priceResponse.ok) {
+                    throw new Error(`Price API error: ${priceResponse.status}`);
+                }
+                
                 const priceData = await priceResponse.json();
+                if (!priceData.bitcoin) {
+                    throw new Error('Bitcoin data missing from price response');
+                }
+                
                 const btc = priceData.bitcoin;
 
-                state.previousPrice = state.currentPrice;
                 state.currentPrice = btc.usd;
+                state.change24h = btc.usd_24h_change;
                 state.high24h = btc.usd * (1 + btc.usd_24h_change / 100);
                 state.low24h = state.currentPrice - (state.high24h - state.currentPrice);
                 state.marketCap = (btc.usd_market_cap / 1e9).toFixed(0);
 
-                // Fetch historical OHLCV data for the last 200 5-minute candles
+                // Fetch historical data - use daily 90-day data (stable, no rate limits)
+                let pricePoints = [];
+                
                 const historyResponse = await fetch(
-                    'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=5m'
+                    'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90',
+                    { headers: { 'Accept': 'application/json' } }
                 );
-                const historyData = await historyResponse.json();
+                
+                if (historyResponse.ok) {
+                    const historyData = await historyResponse.json();
+                    
+                    if (historyData && historyData.prices && Array.isArray(historyData.prices) && historyData.prices.length > 0) {
+                        pricePoints = historyData.prices.map(p => ({
+                            time: p[0],
+                            close: p[1]
+                        }));
+                    } else {
+                        throw new Error('Historical data format invalid');
+                    }
+                } else {
+                    throw new Error(`History API error: ${historyResponse.status}`);
+                }
 
-                // Extract prices and compute OHLCV equivalents
-                const pricePoints = historyData.prices.map(p => ({
-                    time: p[0],
-                    close: p[1]
-                }));
-
-                // Keep last 200 candles
                 state.prices = pricePoints.slice(-200);
-
-                // Compute technical indicators
-                computeIndicators();
+                
+                if (state.prices.length < 5) {
+                    logAlert('WARNING', `Insufficient historical data (${state.prices.length} candles)`, 'neutral');
+                } else {
+                    computeIndicators();
+                }
+                
                 updateUI();
 
             } catch (error) {
@@ -543,22 +568,15 @@
 
             const closes = state.prices.map(p => p.close);
 
-            // SMA 20
             const sma20 = computeSMA(closes, 20);
-
-            // SMA 50
             const sma50 = computeSMA(closes, 50);
-
-            // ATR (14) - using simplified version with high/low estimates
             const atr = computeATR(closes, 14);
             const atrPercent = ((atr / state.currentPrice) * 100).toFixed(2);
 
-            // Recent 20-candle high/low
             const recent20 = closes.slice(-20);
             const recentHigh = Math.max(...recent20);
             const recentLow = Math.min(...recent20);
 
-            // Store in state
             state.indicators = {
                 sma20,
                 sma50,
@@ -568,7 +586,6 @@
                 recentLow
             };
 
-            // Generate signal
             generateSignal(closes, sma20, sma50, atr, atrPercent, recentHigh, recentLow);
         }
 
@@ -584,7 +601,7 @@
             const trValues = [];
             for (let i = 1; i < data.length; i++) {
                 const high = data[i];
-                const low = data[i] * 0.99; // Estimate low
+                const low = data[i] * 0.99;
                 const prevClose = data[i - 1];
 
                 const tr = Math.max(
@@ -606,7 +623,6 @@
             let newSignal = 'NEUTRAL';
             let conditions = [];
 
-            // BUY Conditions
             const buyConditions = [
                 close > recentHigh ? 'Price > Recent High ✓' : 'Price > Recent High ✗',
                 sma20 > sma50 ? 'SMA20 > SMA50 ✓' : 'SMA20 > SMA50 ✗',
@@ -615,7 +631,6 @@
 
             const buyMet = (close > recentHigh) && (sma20 > sma50) && (parseFloat(atrPercent) > 0.5);
 
-            // SELL Conditions
             const sellConditions = [
                 close < recentLow ? 'Price < Recent Low ✓' : 'Price < Recent Low ✗',
                 sma20 < sma50 ? 'SMA20 < SMA50 ✓' : 'SMA20 < SMA50 ✗',
@@ -638,7 +653,6 @@
             state.signal = newSignal;
             state.signalConditions = conditions;
 
-            // Alert on signal change
             if (prevSignal !== newSignal && prevSignal !== 'NEUTRAL') {
                 logAlert('SIGNAL', `${newSignal} signal generated at $${state.currentPrice.toFixed(2)}`, newSignal.toLowerCase());
                 state.lastSignalTime = new Date();
@@ -647,19 +661,16 @@
 
         // ============ UI UPDATES ============
         function updateUI() {
-            // Update prices
             document.getElementById('currentPrice').textContent = `$${state.currentPrice.toFixed(2)}`;
 
-            const change24h = ((state.currentPrice - state.previousPrice) / state.previousPrice * 100 || 0).toFixed(2);
             const changeElement = document.getElementById('priceChange');
-            changeElement.textContent = `${change24h > 0 ? '+' : ''}${change24h}%`;
-            changeElement.className = `price-change ${change24h > 0 ? 'change-positive' : 'change-negative'}`;
+            changeElement.textContent = `${state.change24h > 0 ? '+' : ''}${state.change24h.toFixed(2)}%`;
+            changeElement.className = `price-change ${state.change24h > 0 ? 'change-positive' : 'change-negative'}`;
 
             document.getElementById('high24h').textContent = `$${state.high24h.toFixed(0)}`;
             document.getElementById('low24h').textContent = `$${state.low24h.toFixed(0)}`;
             document.getElementById('marketCap').textContent = `$${state.marketCap}`;
 
-            // Update indicators
             if (state.indicators) {
                 document.getElementById('sma20').textContent = `$${state.indicators.sma20.toFixed(2)}`;
                 document.getElementById('sma50').textContent = `$${state.indicators.sma50.toFixed(2)}`;
@@ -669,13 +680,9 @@
                 document.getElementById('recentLow').textContent = `$${state.indicators.recentLow.toFixed(2)}`;
             }
 
-            // Update signal
             updateSignalBox();
-
-            // Update chart
             updateChart();
 
-            // Update timestamp
             state.lastUpdate = new Date();
             document.getElementById('updateStatus').textContent = `Last update: ${state.lastUpdate.toLocaleTimeString()}`;
         }
@@ -687,7 +694,6 @@
             const signalConditions = document.getElementById('signalConditions');
 
             signalBox.className = `signal-box ${state.signal.toLowerCase()}`;
-
             signalText.textContent = `${state.signal} Signal`;
 
             if (state.signal === 'BUY') {
@@ -729,7 +735,7 @@
                 datasets: [
                     {
                         label: 'Price (USDT)',
-                        data: priceData,
+                         priceData,
                         borderColor: '#38bdf8',
                         backgroundColor: 'rgba(56, 189, 248, 0.1)',
                         borderWidth: 2,
@@ -741,7 +747,7 @@
                     },
                     {
                         label: 'SMA20',
-                        data: sma20Data,
+                         sma20Data,
                         borderColor: '#22c55e',
                         borderWidth: 1.5,
                         fill: false,
@@ -752,7 +758,7 @@
                     },
                     {
                         label: 'SMA50',
-                        data: sma50Data,
+                         sma50Data,
                         borderColor: '#f59e0b',
                         borderWidth: 1.5,
                         fill: false,
@@ -772,7 +778,7 @@
             } else {
                 state.chart = new Chart(ctx, {
                     type: 'line',
-                    data: chartData,
+                     chartData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
@@ -898,10 +904,9 @@ Webhook integration ready: POST your webhook URL here
                 if (state.autoUpdate) {
                     fetchBTCData();
                 }
-            }, 60000); // 60 second polling
+            }, 60000);
         }
 
-        // Start application
         window.addEventListener('load', initialize);
     </script>
 </body>
